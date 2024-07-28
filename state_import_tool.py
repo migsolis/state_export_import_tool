@@ -1,50 +1,62 @@
 import argparse
 import pandas as pd
 import xml.etree.ElementTree as ET
+from numpy import float64
 
-def create_state_class(parent, values):
+def create_state_class(parent: ET.Element, values: pd.DataFrame) -> ET.Element:
+    state_class = ET.SubElement(parent, 'EquipmentStateClass')
     tag = 'Name'
-    name = ET.SubElement(parent, tag)
+    name = ET.SubElement(state_class, tag)
     name.text = str(values[tag])
 
     tag = 'OverrideCurrentLineDowntime'
-    override = ET.SubElement(parent, tag)
+    override = ET.SubElement(state_class, tag)
     override.text = str(values[tag])
 
     tag = 'Roles'
-    roles = ET.fromstring(values['Roles'])
-    parent.append(roles)
-    return
+    if pd.isnull(values['Roles']):
+        ET.SubElement(state_class, 'Roles')
+    else:
+        roles = ET.fromstring(values['Roles'])
+        state_class.append(roles)
+    
+    return state_class
 
-def create_state(parent, values):
+def create_state(parent: ET.Element, values: pd.DataFrame) -> ET.Element:
     elements = ['Name', 'Code', 'Type', 'ShortStopThreshold', 'EnableMeantimeMetrics', 'OverrideCurrentLineDowntime', 'Override', 'Scope']
     state = ET.SubElement(parent, 'EquipmentState')
 
     for e in elements:
         temp = ET.SubElement(state, e)
-        temp.text = str(values[e])
+        value = values[e]
+        if type(values[e]) == float64:
+            value = int(value)
+        
+        temp.text = str(value)
 
     return state
 
-def create_tree(index, df, path, node) -> int:
+def create_tree(index: int, df: pd.DataFrame, path: str, parent: ET.Element) -> int:
     while index < df.shape[0]:
         if df.loc[index, 'Parent'] != path:
             break
-        
-        state = create_state(node, df.iloc[index, :])
-        index = create_tree(index + 1, df, df.loc[index, 'Path'], state)
+        node = None
+        if df.loc[index, 'NodeType'] == 'EquipmentStateClass':
+            node = create_state_class(parent,df.iloc[index, :])
+
+        if df.loc[index, 'NodeType'] == 'EquipmentState':
+            node = create_state(parent, df.iloc[index, :])
+
+        index = create_tree(index + 1, df, df.loc[index, 'Path'], node)
     return index    
 
 
-def excel_to_xml(state_classes: pd.DataFrame, states: pd.DataFrame) -> ET.ElementTree:
-    xml_header = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n<EquipmentStateRoot></EquipmentStateRoot>'
+def excel_to_xml(import_table: pd.DataFrame) -> ET.ElementTree:
+    # xml_header = '<?xml version="1.0" encoding="UTF-8" standalone="no"?><EquipmentStateRoot></EquipmentStateRoot>'
     root = ET.Element('EquipmentStateRoot')
     doc = ET.ElementTree(root)
-    
-    for i in range(state_classes.shape[0]):
-        name = state_classes.loc[i, 'Name']
-        create_state_class(root, state_classes.iloc[i])
-        create_tree(0, states.loc[states['EquipmentStateClass'] == name], "~", root)
+
+    create_tree(0, import_table, "~", root)
     ET.indent(root)
     ET.dump(root)
     return doc
@@ -57,9 +69,8 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--name', default='output')
     args = parser.parse_args()
     
-    state_classes = pd.read_csv('class_Default.csv')
-    states = pd.read_csv(args.path)
+    import_table = pd.read_csv(args.path)
 
-    doc = excel_to_xml(state_classes, states)
+    doc = excel_to_xml(import_table)
 
     doc.write(f'{args.name}.xml')

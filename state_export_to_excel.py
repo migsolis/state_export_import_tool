@@ -2,7 +2,7 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 import argparse
 
-def destructure(node: ET.ElementTree, df: pd.DataFrame, parent: str ='~'):
+def destructure(node: ET.ElementTree, df: pd.DataFrame, parent: str ='~') -> pd.DataFrame:
     deep_children = []
     row_data = {}
     row_data['NodeType'] = node.tag
@@ -25,7 +25,7 @@ def destructure(node: ET.ElementTree, df: pd.DataFrame, parent: str ='~'):
 
     return df
 
-def xml_to_excel(path):
+def xml_to_excel(path: str) -> pd.DataFrame:
     try:
         xml_data = ET.parse(path)
     except:

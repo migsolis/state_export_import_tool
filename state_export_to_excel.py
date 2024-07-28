@@ -55,7 +55,7 @@ def xml_to_excel(path: str) -> pd.DataFrame:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--path')
-    parser.add_argument('-n', '--name', default="state_tables")
+    parser.add_argument('-n', '--name', default="states_table")
     args = parser.parse_args()
     
     import_table = xml_to_excel(args.path)

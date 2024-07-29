@@ -51,17 +51,46 @@ def create_tree(index: int, df: pd.DataFrame, path: str, parent: ET.Element) -> 
     return index    
 
 
-def excel_to_xml(import_table: pd.DataFrame) -> ET.ElementTree:
+def excel_to_xml(import_table: pd.DataFrame, name: str) -> ET.ElementTree:
     # xml_header = '<?xml version="1.0" encoding="UTF-8" standalone="no"?><EquipmentStateRoot></EquipmentStateRoot>'
     root = ET.Element('EquipmentStateRoot')
     doc = ET.ElementTree(root)
-
-    create_tree(0, import_table, "~", root)
+    
+    index = create_tree(0, import_table, "~", root)
+    if index < import_table.shape[0]:
+        import_table.loc[index, 'Error'] = 'Error Creating Node'
+        generate_output_file(import_table, name)
     ET.indent(root)
     ET.dump(root)
     return doc
 
+def check_duplicate_state_codes(df: pd.DataFrame) -> bool:
+    classes = df.loc[df['StateClass'].isna() == False, 'StateClass'].unique()
+    duplicates = []
+    for c in classes:
+        t = df.loc[df['StateClass'] == c]
+        duplicates.extend(list(t.loc[t['Code'].duplicated()].index))
+    
+    if len(duplicates) > 0:
+        df.loc[duplicates, 'Error'] = 'Duplicate State Code'
+        return True
 
+    return False
+
+def check_duplicate_paths(df: pd.DataFrame) -> bool:
+    duplicates = []
+
+    duplicates.extend(list(df.loc[df['Path'].duplicated()].index))
+    
+    if len(duplicates) > 0:
+        df.loc[duplicates, 'Error'] = 'Duplicate Path'
+        return True
+
+    return False
+
+def generate_output_file(import_table: pd.DataFrame, name: str):
+        import_table.to_csv(f'{name}.csv', index=False)
+        exit(1)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -70,7 +99,14 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     import_table = pd.read_csv(args.path)
+    import_table.sort_values('Path')
 
-    doc = excel_to_xml(import_table)
+    duplicate_codes = check_duplicate_state_codes(import_table)
+    duplicate_paths = check_duplicate_paths(import_table)
+
+    if duplicate_codes or duplicate_paths:
+        generate_output_file(import_table, args.name)
+
+    doc = excel_to_xml(import_table, args.name)
 
     doc.write(f'{args.name}.xml')

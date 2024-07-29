@@ -2,7 +2,7 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 import argparse
 
-def destructure(node: ET.ElementTree, df: pd.DataFrame, parent: str ='~') -> pd.DataFrame:
+def destructure(node: ET.ElementTree, df: pd.DataFrame, parent: str ='~', state_class: str = '') -> pd.DataFrame:
     deep_children = []
     row_data = {}
     row_data['NodeType'] = node.tag
@@ -14,14 +14,16 @@ def destructure(node: ET.ElementTree, df: pd.DataFrame, parent: str ='~') -> pd.
             row_data[child.tag] = ET.tostring(child).decode('ascii').replace(' ', '').replace('\n','')
         else:
             deep_children.append(child)
-
+    row_data['StateClass'] = state_class
+    if node.tag == 'EquipmentStateClass':
+        state_class = row_data['Name']
     row_data['Parent'] = parent
     row_data['Path'] = parent + '/' + row_data['Name']
     row = pd.DataFrame([row_data])
     df = pd.concat([df, row])
     
     for child in deep_children:  
-        df = destructure(child, df, f'{parent}/{row_data["Name"]}')
+        df = destructure(child, df, f'{parent}/{row_data["Name"]}', state_class)
 
     return df
 
@@ -42,6 +44,7 @@ def xml_to_excel(path: str) -> pd.DataFrame:
         import_table = destructure(state_class, import_table)
 
     print(f'Did the thing...')
+    state_class = import_table.pop('StateClass')
     roles = import_table.pop('Roles')
     parents = import_table.pop('Parent')
     paths = import_table.pop('Path')
@@ -49,6 +52,7 @@ def xml_to_excel(path: str) -> pd.DataFrame:
     import_table['Roles'] = roles
     import_table['Parent'] = parents
     import_table['Path'] = paths
+    import_table.insert(1, 'StateClass', state_class)
     return import_table
 
 

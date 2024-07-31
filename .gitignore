@@ -1,0 +1,16 @@
+
+# Python Virtual Environment
+.venv
+
+# Py Installer directories and Files
+build
+dist
+*.spec
+
+# vscode
+.vscode/*
+!.vscode/launch.json
+
+# files
+*.xml
+*.csv

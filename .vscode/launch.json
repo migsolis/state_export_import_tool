@@ -1,0 +1,30 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug State Export tool",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "state_export_to_excel.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-p",
+                "stateExport.xml"
+            ]
+        },
+        {
+            "name": "Debug State Import Tool",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "state_import_tool.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-p",
+                "states_table.csv"
+            ]
+        }
+    ]
+}

@@ -2,7 +2,9 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 import argparse
 
-def destructure(node: ET.ElementTree, df: pd.DataFrame, parent: str ='~', state_class: str = '') -> pd.DataFrame:
+ROOT_CHAR = "~"
+
+def destructure(node: ET.ElementTree, df: pd.DataFrame, parent: str = ROOT_CHAR, state_class: str = '') -> pd.DataFrame:
     deep_children = []
     row_data = {}
     row_data['NodeType'] = node.tag
@@ -43,7 +45,6 @@ def xml_to_excel(path: str) -> pd.DataFrame:
             continue
         import_table = destructure(state_class, import_table)
 
-    print(f'Did the thing...')
     state_class = import_table.pop('StateClass')
     roles = import_table.pop('Roles')
     parents = import_table.pop('Parent')
@@ -53,6 +54,7 @@ def xml_to_excel(path: str) -> pd.DataFrame:
     import_table['Parent'] = parents
     import_table['Path'] = paths
     import_table.insert(1, 'StateClass', state_class)
+    import_table.sort_values('Path', inplace=True)
     return import_table
 
 
@@ -63,4 +65,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     import_table = xml_to_excel(args.path)
+    print(f'Did the thing...')
     import_table.to_csv(f'{args.name}.csv', index=False)

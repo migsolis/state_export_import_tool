@@ -1,0 +1,4 @@
+QTableWidgetItem::item:editable {
+    color: black;
+    font-weight: bold;
+}

@@ -1,0 +1,9 @@
+NodeType,StateClass,Name,OverrideCurrentLineDowntime,Code,Type,ShortStopThreshold,EnableMeantimeMetrics,Override,Scope,Roles,Parent,Path,Error
+EquipmentStateClass,,Default,True,,,,,,,<Roles><Role>Administrator</Role></Roles>,~,~/Default,
+EquipmentState,Default,Blocked,True,5.0,Blocked,0.0,False,Optional,Detected Equipment State,,~/Default,~/Default/Blocked,
+EquipmentState,Default,Disabled,True,0.0,Disabled,0.0,False,Optional,Detected Equipment State,,~/Default,~/Default/Disabled,
+EquipmentState,Default,Idle,True,2.0,Idle,0.0,False,Optional,Detected Equipment State,,~/Default,~/Default/Idle,
+EquipmentState,Default,Planned Downtime,True,4.0,Planned Downtime,0.0,False,Optional,Detected Equipment State,,~/Default,~/Default/Planned Downtime,
+EquipmentState,Default,Running,True,1.0,Running,0.0,False,Optional,Detected Equipment State,,~/Default,~/Default/Running,
+EquipmentState,Default,Starved,True,6.0,Starved,0.0,False,Optional,Detected Equipment State,,~/Default,~/Default/Starved,
+EquipmentState,Default,Unplanned Downtime,True,3.0,Unplanned Downtime,0.0,False,Optional,Detected Equipment State,,~/Default,~/Default/Unplanned Downtime,

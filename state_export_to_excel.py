@@ -55,15 +55,17 @@ def xml_to_excel(path: str) -> pd.DataFrame:
     import_table['Path'] = paths
     import_table.insert(1, 'StateClass', state_class)
     import_table.sort_values('Path', inplace=True)
-    return import_table
+    split_path = import_table['Path'].str.split('/', expand=True).drop(0, axis=1)
+    split_path.columns = [f'ReasonLevel{i}' for i in range(1, split_path.shape[1] + 1)]
 
+    return pd.concat([import_table, split_path], axis=1)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--path')
     parser.add_argument('-n', '--name', default="states_table")
     args = parser.parse_args()
-    
+
     import_table = xml_to_excel(args.path)
     print(f'Did the thing...')
     import_table.to_csv(f'{args.name}.csv', index=False)

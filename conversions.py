@@ -11,7 +11,7 @@ class Converter(ABC):
         pass
 
     @abstractmethod
-    def serialize(self, df, path: str, name: str) -> None:
+    def serialize(self, df, path: str) -> None:
         pass
 
 class CSVConverter(Converter):
@@ -24,8 +24,8 @@ class CSVConverter(Converter):
     
         return df
 
-    def serialize(self, df: pd.DataFrame, path: str, name: str) -> None:
-        df.to_csv(f'{path}{name}.csv')
+    def serialize(self, df: pd.DataFrame, path: str) -> None:
+        df.to_csv(path)
 
     def _prep_df(self, df: pd.DataFrame) -> pd.DataFrame:
         df.drop('Path', axis=1, inplace= True)
@@ -38,8 +38,8 @@ class ExcelConverter(Converter):
     def deserialize(self, path: str) -> pd.DataFrame:
         pass
 
-    def serialize(self, df: pd.DataFrame, path: str, name: str) -> None:
-        df.to_excel(f'{path}{name}.xlsx')
+    def serialize(self, df: pd.DataFrame, path: str) -> None:
+        df.to_excel(path)
 
 class XMLConverter(Converter):
     ROOT_CHAR = '~'
@@ -76,7 +76,7 @@ class XMLConverter(Converter):
 
         return df
     
-    def serialize(self, df: pd.DataFrame, path: str, name: str) -> ET.ElementTree:
+    def serialize(self, df: pd.DataFrame, path: str) -> ET.ElementTree:
         # xml_header = '<?xml version="1.0" encoding="UTF-8" standalone="no"?><EquipmentStateRoot></EquipmentStateRoot>'
         if not df:
             df = self.df
@@ -91,7 +91,7 @@ class XMLConverter(Converter):
         ET.dump(root)
         self.xml_tree = doc
 
-        self.xml_tree.write(f'{path}{name}.xml')
+        self.xml_tree.write(path)
 
     def _create_state(self, parent: ET.Element, values: pd.DataFrame) -> ET.Element:
         elements = ['Name', 'Code', 'Type', 'ShortStopThreshold', 'EnableMeantimeMetrics', 'OverrideCurrentLineDowntime', 'Override', 'Scope']

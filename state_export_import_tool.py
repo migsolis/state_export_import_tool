@@ -96,7 +96,7 @@ class StateExportImportTool(QWidget):
         
         for file in file_info:
             print(file)
-            state_table = StateTable().from_csv(file['Path'])
+            state_table = StateTable().from_xml(file['Path'])
 
             filename, _ = QFileDialog().getSaveFileName(self,
                                             'Save state table', 

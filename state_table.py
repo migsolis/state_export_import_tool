@@ -19,14 +19,14 @@ class StateTable():
     def get_row(self, row: int) -> dict:
         return self.df.loc[row].to_dict()
 
-    def to_csv(self, path: str='', name: str='state_table') -> None:
-        StateTable.csv_converter.serialize(self.df, path, name)
+    def to_csv(self, path: str='state_table') -> None:
+        StateTable.csv_converter.serialize(self.df, path)
 
     def to_dataframe(self):
         return self.df
     
-    def to_xml(self, path: str='', name: str='state_table'):
-        StateTable.xml_converter.serialize(self.df, path, name)
+    def to_xml(self, path: str='state_table'):
+        StateTable.xml_converter.serialize(self.df, path)
 
 if __name__ == '__main__':
     state_table = StateTable().from_csv('states_table.csv')

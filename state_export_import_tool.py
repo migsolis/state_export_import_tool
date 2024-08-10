@@ -1,15 +1,13 @@
 from PySide6.QtCore import (QAbstractTableModel, QDir, QModelIndex, Qt, QTimer, Slot)
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QFileDialog, QFileSystemModel, QGridLayout, QHBoxLayout, QHeaderView, QLabel, QPushButton, QProgressBar, QMainWindow, QMenu, QMenuBar, QStyleFactory, QTableWidget, QTableWidgetItem, QTableWidgetSelectionRange, QTableView, QTreeView, QVBoxLayout, QWidget)
 from PySide6.QtGui import (QIcon, QFont)
+from state_table import StateTable
 from time import strftime
-import random
-import time
 import sys
 
 class StateExportImportTool(QWidget):
     def __init__(self, data=[]):
         super().__init__()
-        self._data = data
 
         self.setWindowTitle('State Export/Import Tool')
         self.setWindowIcon(QIcon('resources/images/edit-solid.svg'))
@@ -77,7 +75,7 @@ class StateExportImportTool(QWidget):
             output_name = f'{filename.split('.')[0]}'
             # output_name = f'{filename.split('.')[0]}_{strftime('%Y%m%d_%H%M%S')}'
 
-            self.insert_table_row(filename=filename, output_name=output_name)
+            self.insert_table_row(filename=filename, path=path, output_name=output_name)
 
     @Slot()
     def advance_progressbar(self):
@@ -94,19 +92,51 @@ class StateExportImportTool(QWidget):
     @Slot()
     def xml_to_excel_button_clicked(self):
         print('XML to CSV button pressed')
+        file_info = self.get_selected_files()
+        
+        for file in file_info:
+            print(file)
+            state_table = StateTable().from_csv(file['Path'])
+
+            filename, _ = QFileDialog().getSaveFileName(self,
+                                            'Save state table', 
+                                             f'{QDir.currentPath()}/{file['File Name']}', 
+                                             'CSV (*.csv)'
+                                             )
+            print(filename)
+            state_table.to_csv(filename)
+                
 
     @Slot()
     def excel_to_xml_button_clicked(self):
         print('CSV to XML button pressed')
 
+    def save_file(self, file_info):
+        pass
+
+    def get_selected_files(self):
+        data = []
+        for row in range(self.table.rowCount()):
+            row_data = {'row': row}
+            for col in range(1, self.table.columnCount()):
+                header_text = self.table.horizontalHeaderItem(col).text()
+                item = self.table.item(row, col)
+                item_text = item.text() if item else ''
+                row_data[header_text] = item_text
+            data.append(row_data)
+        
+        return data
+
     def create_table(self):
         table = QTableWidget(self)
-        table.setColumnCount(4)
-        table.setHorizontalHeaderLabels([None, 'File Name', 'Output Name', 'Message'])
+        table.setColumnCount(5)
+        table.setHorizontalHeaderLabels([None, 'File Name', 'Path', 'Output Name', 'Message'])
         table.horizontalHeader().setMinimumSectionSize(20)
         table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
         table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        table.horizontalHeader().hideSection(2)
+        table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
         table.horizontalHeader().setStretchLastSection(True)
         table.verticalHeader().setVisible(False)
         table.setRowCount(0)
@@ -117,14 +147,14 @@ class StateExportImportTool(QWidget):
 
         return table
     
-    def insert_table_row(self, selected=False, filename=None, output_name='', message=''):
+    def insert_table_row(self, selected=False, filename=None, path=None, output_name='', message=''):
         if filename:
             row_num = self.table.rowCount()
             self.table.insertRow(row_num)
-            self.update_table_row(row_num, selected=selected, filename=filename, output_name=output_name, message=message)
+            self.update_table_row(row_num, selected=selected, filename=filename, path=path, output_name=output_name, message=message)
 
 
-    def update_table_row(self, row, *, selected=False, filename=None, output_name=None, message=None):
+    def update_table_row(self, row, *, selected=False, filename=None, path=None, output_name=None, message=None):
         checkbox_item = QTableWidgetItem()
         checkbox_item.setCheckState(Qt.CheckState.Checked if selected else Qt.CheckState.Unchecked)
         self.table.setItem(row, 0, checkbox_item)
@@ -135,15 +165,19 @@ class StateExportImportTool(QWidget):
             # filename_item.setFlags(Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable)
             self.table.setItem(row, 1, filename_item)
         
+        if path != None:
+            path_item = QTableWidgetItem(path)
+            self.table.setItem(row, 2, path_item)
+
         if output_name != None:
             output_item = QTableWidgetItem(output_name)
             # output_item.setIcon()
-            self.table.setItem(row, 2, output_item)
+            self.table.setItem(row, 3, output_item)
         
         if message != None:
             message_item = QTableWidgetItem(message)
             message_item.setFlags(message_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            self.table.setItem(row, 3, message_item)
+            self.table.setItem(row, 4, message_item)
 
     def create_progress_bar(self):
         progress_bar = QProgressBar()
@@ -152,12 +186,6 @@ class StateExportImportTool(QWidget):
         timer.timeout.connect(self.advance_progressbar)
         timer.start(1000)
         return progress_bar
-
-    def create_menu(self):
-        self._menu_bar = QMenuBar()
-        self._file_menu = self._menu_bar.addMenu('&File')
-        self.setMenuBar(self._menu_bar)
-        
 
 if __name__ == '__main__':
 

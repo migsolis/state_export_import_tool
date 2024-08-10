@@ -2,7 +2,7 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 import argparse
 
-class XMLConverter():
+class StateExportTool():
     ROOT_CHAR = "~"
 
     def __init__(self, path):
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--name', default="states_table")
     args = parser.parse_args()
 
-    converter = XMLConverter(args.path)
+    converter = StateExportTool(args.path)
     converter.convert_to_df()
     print(f'Did the thing...')
     converter.to_csv(f'{args.name}.csv')

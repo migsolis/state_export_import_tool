@@ -15,3 +15,6 @@ dist
 *.xml
 *.csv
 !template.csv
+
+__pycache__
+testing

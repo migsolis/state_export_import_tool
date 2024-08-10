@@ -20,13 +20,13 @@ class StateTable():
         return self.df.loc[row].to_dict()
 
     def to_csv(self, path: str='state_table') -> None:
-        StateTable.csv_converter.serialize(self.df, path)
+        StateTable.csv_converter.serialize(path, self.df)
 
     def to_dataframe(self):
         return self.df
     
     def to_xml(self, path: str='state_table'):
-        StateTable.xml_converter.serialize(self.df, path)
+        StateTable.xml_converter.serialize(path, self.df)
 
 if __name__ == '__main__':
     state_table = StateTable().from_csv('states_table.csv')

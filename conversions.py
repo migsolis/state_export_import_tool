@@ -11,7 +11,7 @@ class Converter(ABC):
         pass
 
     @abstractmethod
-    def serialize(self, df, path: str) -> None:
+    def serialize(self, path: str, df: pd.DataFrame=None) -> None:
         pass
 
 class CSVConverter(Converter):
@@ -24,7 +24,7 @@ class CSVConverter(Converter):
     
         return df
 
-    def serialize(self, df: pd.DataFrame, path: str) -> None:
+    def serialize(self, path: str, df: pd.DataFrame=None) -> None:
         df.to_csv(path)
 
     def _prep_df(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -38,7 +38,7 @@ class ExcelConverter(Converter):
     def deserialize(self, path: str) -> pd.DataFrame:
         pass
 
-    def serialize(self, df: pd.DataFrame, path: str) -> None:
+    def serialize(self, path: str, df: pd.DataFrame=None) -> None:
         df.to_excel(path)
 
 class XMLConverter(Converter):
@@ -76,9 +76,9 @@ class XMLConverter(Converter):
 
         return df
     
-    def serialize(self, df: pd.DataFrame, path: str) -> ET.ElementTree:
+    def serialize(self, path: str, df: pd.DataFrame=None) -> ET.ElementTree:
         # xml_header = '<?xml version="1.0" encoding="UTF-8" standalone="no"?><EquipmentStateRoot></EquipmentStateRoot>'
-        if not df:
+        if type(df) != pd.DataFrame:
             df = self.df
         root = ET.Element('EquipmentStateRoot')
         doc = ET.ElementTree(root)

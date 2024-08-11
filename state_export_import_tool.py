@@ -1,9 +1,10 @@
-from PySide6.QtCore import (QAbstractTableModel, QDir, QModelIndex, Qt, QTimer, Slot)
-from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QFileDialog, QFileSystemModel, QGridLayout, QHBoxLayout, QHeaderView, QLabel, QPushButton, QProgressBar, QMainWindow, QMenu, QMenuBar, QStyleFactory, QTableWidget, QTableWidgetItem, QTableWidgetSelectionRange, QTableView, QTreeView, QVBoxLayout, QWidget)
-from PySide6.QtGui import (QIcon, QFont)
-from state_table import StateTable
-from time import strftime
 import sys
+from PySide6.QtCore import (QDir, Qt, QTimer, Slot)
+from PySide6.QtWidgets import (QAbstractItemView, QApplication, QFileDialog, QGridLayout, QHeaderView, QLabel, QPushButton, QProgressBar, QTableWidget, QTableWidgetItem, QWidget)
+from PySide6.QtGui import (QIcon)
+from state_table import StateTable, StateTableChecker
+from utils import template
+# from time import strftime
 
 class StateExportImportTool(QWidget):
     def __init__(self, data=[]):
@@ -27,7 +28,7 @@ class StateExportImportTool(QWidget):
         # self.progress_label.hide()
 
         self.table = self.create_table()
-        self.progress_bar = self.create_progress_bar()
+        # self.progress_bar = self.create_progress_bar()
         # self.progress_bar.hide()
 
         self.layout.addWidget(self.button, 0, 0, 1, 3)
@@ -36,9 +37,10 @@ class StateExportImportTool(QWidget):
         self.layout.addWidget(self.xml_to_excel_button, 2, 2, 1, 3)
         self.layout.addWidget(self.excel_to_xml_button, 2, 7, 1, 3)
         self.layout.addWidget(self.progress_label, 3, 0, 1, 12)
-        self.layout.addWidget(self.progress_bar, 4, 0, 1, 12)
+        # self.layout.addWidget(self.progress_bar, 4, 0, 1, 12)
 
         self.state_tables = []
+        self.state_table_checker = StateTableChecker()
     
     @Slot()
     def cell_changed(self, row, col):
@@ -77,14 +79,19 @@ class StateExportImportTool(QWidget):
             output_name = split_name[0]
             # output_name = f'{filename.split('.')[0]}_{strftime('%Y%m%d_%H%M%S')}'
             extension = split_name[-1]
-            row_num = self.insert_table_row(filename=filename, path=path, extension=extension, output_name=output_name)
 
             state_table = None
             if extension == 'csv':
                 state_table = StateTable().from_csv(path)
             elif extension == 'xml':
                 state_table = StateTable().from_xml(path)
-
+            
+            message = None
+            if state_table:
+                errors = self.state_table_checker.check_for_errors(state_table)
+                if errors:
+                    message = str(errors)
+            row_num = self.insert_table_row(filename=filename, path=path, extension=extension, output_name=output_name, message=message)
             self.state_tables.insert(row_num, state_table)
 
     @Slot()
@@ -95,16 +102,13 @@ class StateExportImportTool(QWidget):
 
     @Slot()
     def download_template_button_clicked(self):
-        with open('template.csv') as file:
-            template_content = file.read()
-            # QFileDialog.saveFileContent(file_bytes, 'template.csv')
-            filename, _ = QFileDialog.getSaveFileName(self,
-                                                      'Save Template File',
-                                                      f'{QDir.currentPath()}/state_table_template.csv',
-                                                      'CSV (*.csv)')
-            
-            with open(filename, 'w') as file:
-                file.write(template_content)
+        filename, _ = QFileDialog.getSaveFileName(self,
+                                                    'Save Template File',
+                                                    f'{QDir.currentPath()}/state_table_template.csv',
+                                                    'CSV (*.csv)')
+        
+        with open(filename, 'w') as file:
+            file.write(template)
 
     @Slot()
     def to_csv_button_clicked(self):
@@ -241,7 +245,7 @@ if __name__ == '__main__':
     widget.setFixedSize(600, 300)
     widget.show()
 
-    with open('resources/stylesheets/styles.css') as styles:
-        file_string = styles.read()
-        widget.setStyleSheet(file_string)
+    # with open('resources/stylesheets/styles.css') as styles:
+    #     file_string = styles.read()
+    #     widget.setStyleSheet(file_string)
     sys.exit(app.exec())

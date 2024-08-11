@@ -7,6 +7,7 @@ class StateTable():
     
     def __init__(self, df: pd.DataFrame=None) -> None:
         self.df = df
+        self.xml_tree = None
 
     @classmethod
     def from_csv(cls, path:str) -> None:
@@ -25,8 +26,10 @@ class StateTable():
     def to_dataframe(self):
         return self.df
     
-    def to_xml(self, path: str='state_table') -> None:
-        StateTable.xml_converter.serialize(path, self.df)
+    def to_xml(self, path: str='state_table', refresh: bool = False) -> None:
+        if self.xml_tree and not refresh:
+            self.xml_tree.write(path)
+        self.xml_tree = StateTable.xml_converter.serialize(path, self.df)
 
 class StateTableChecker():
 

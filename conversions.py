@@ -88,10 +88,9 @@ class XMLConverter(Converter):
             raise Exception(f'Error Creating node at index {index}')
         
         ET.indent(root)
-        ET.dump(root)
-        self.xml_tree = doc
-
-        self.xml_tree.write(path)
+        # ET.dump(root)
+        doc.write(path)
+        return doc
 
     def _create_state(self, parent: ET.Element, values: pd.DataFrame) -> ET.Element:
         elements = ['Name', 'Code', 'Type', 'ShortStopThreshold', 'EnableMeantimeMetrics', 'OverrideCurrentLineDowntime', 'Override', 'Scope']

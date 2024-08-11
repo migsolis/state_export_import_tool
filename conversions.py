@@ -74,7 +74,7 @@ class XMLConverter(Converter):
         df.insert(1, 'StateClass', state_class)
         df.sort_values('Path', inplace=True)
 
-        return df
+        return df.reset_index(drop=True)
     
     def serialize(self, path: str, df: pd.DataFrame=None) -> ET.ElementTree:
         # xml_header = '<?xml version="1.0" encoding="UTF-8" standalone="no"?><EquipmentStateRoot></EquipmentStateRoot>'

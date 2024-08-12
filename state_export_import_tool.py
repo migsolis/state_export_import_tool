@@ -1,8 +1,8 @@
 import sys
 from PySide6.QtCore import (QDir, Qt, QTimer, Slot)
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QFileDialog, QGridLayout, QHeaderView, QLabel, QPushButton, QProgressBar, QTableWidget, QTableWidgetItem, QWidget)
-from PySide6.QtGui import (QIcon)
 from state_table import StateTable, StateTableChecker
+from state_table_widget import StateTableWidget
 from utils import template
 # from time import strftime
 
@@ -11,13 +11,16 @@ class StateExportImportTool(QWidget):
         super().__init__()
 
         self.setWindowTitle('State Export/Import Tool')
-        self.setWindowIcon(QIcon('resources/images/edit-solid.svg'))
         self.layout = QGridLayout(self)
 
         self.button = QPushButton('Open Export Files')
         self.button.clicked.connect(self.open_Files)
         self.template_button = QPushButton('Download CSV Template')
         self.template_button.clicked.connect(self.download_template_button_clicked)
+
+        self.preview_button = QPushButton('Preview State Table')
+        self.preview_button.setDisabled(True)
+        self.preview_button.clicked.connect(self.preview)
         self.xml_to_excel_button = QPushButton('XML -> CSV')
         self.xml_to_excel_button.setDisabled(True)
         self.xml_to_excel_button.clicked.connect(self.to_csv_button_clicked)
@@ -34,8 +37,9 @@ class StateExportImportTool(QWidget):
         self.layout.addWidget(self.button, 0, 0, 1, 3)
         self.layout.addWidget(self.template_button, 0, 8, 1, 4)
         self.layout.addWidget(self.table, 1, 0, 1, 12)
-        self.layout.addWidget(self.xml_to_excel_button, 2, 2, 1, 3)
-        self.layout.addWidget(self.excel_to_xml_button, 2, 7, 1, 3)
+        self.layout.addWidget(self.preview_button, 2, 0, 1, 4)
+        self.layout.addWidget(self.xml_to_excel_button, 2, 5, 1, 3)
+        self.layout.addWidget(self.excel_to_xml_button, 2, 9, 1, 3)
         self.layout.addWidget(self.progress_label, 3, 0, 1, 12)
         # self.layout.addWidget(self.progress_bar, 4, 0, 1, 12)
 
@@ -62,6 +66,16 @@ class StateExportImportTool(QWidget):
     @Slot()
     def cell_clicked(self, row, col):
         print(f'Cell clicked row {row} col {col}')
+
+    @Slot()
+    def item_selection_changed(self):
+        selected_items = self.table.selectedItems()
+        row = self.table.row(selected_items[0])
+        print(f'Selection changed, row {row}')
+
+        file_name = selected_items[1].text()
+        self.preview_button.setText(f'Preview {file_name}')
+        self.preview_button.setDisabled(False)
 
     @Slot()
     def open_Files(self):
@@ -93,6 +107,16 @@ class StateExportImportTool(QWidget):
                     message = str(errors)
             row_num = self.insert_table_row(filename=filename, path=path, extension=extension, output_name=output_name, message=message)
             self.state_tables.insert(row_num, state_table)
+
+    @Slot()
+    def preview(self):
+        print(f'Preview button clicked')
+        selected_items = self.table.selectedItems()
+        row = self.table.row(selected_items[0])
+
+        self.state_table_widget = StateTableWidget(self.state_tables[row])
+        self.state_table_widget.resize(900, 600)
+        self.state_table_widget.show()
 
     @Slot()
     def advance_progressbar(self):
@@ -184,6 +208,7 @@ class StateExportImportTool(QWidget):
         table.setRowCount(0)
         table.cellChanged.connect(self.cell_changed)
         table.cellClicked.connect(self.cell_clicked)
+        table.itemSelectionChanged.connect(self.item_selection_changed)
         table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         table.edit
 
@@ -240,7 +265,7 @@ if __name__ == '__main__':
     app.setStyle('fusion')
 
     widget = StateExportImportTool()
-    widget.setStyleSheet
+    # widget.setStyleSheet
     widget.resize(600, 400)
     widget.setFixedSize(600, 300)
     widget.show()

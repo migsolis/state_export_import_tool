@@ -17,8 +17,26 @@ class StateTable():
     def from_xml(cls, path: str) -> None:
         return cls(StateTable.xml_converter.deserialize(path))
 
+    def get_column(self, col: int | str) -> list:
+        if isinstance(col, int):
+            return self.df.iloc[:, col].to_list()
+        if isinstance(col, str):
+            return self.df.loc[:, col].to_list()
+    
+    def get_column_count(self) -> int:
+        return self.df.shape[1]
+
+    def get_column_names(self) -> list:
+        return self.df.columns.to_list()
+
     def get_row(self, row: int) -> dict:
         return self.df.loc[row].to_dict()
+    
+    def get_row_count(self) -> int:
+        return self.df.shape[0]
+    
+    def get_value(self, row: int, col: int) -> str | int | float:
+        return self.df.iloc[row, col]
 
     def to_csv(self, path: str='state_table') -> None:
         StateTable.csv_converter.serialize(path, self.df)

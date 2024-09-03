@@ -9,14 +9,17 @@ class StateTable():
         self.df = df
         self.xml_tree = None
 
+    # Creates a state table instance from a csv file
     @classmethod
     def from_csv(cls, path:str) -> None:
         return cls(StateTable.csv_converter.deserialize(path))
 
+    # Creates a state table instance from a xml file
     @classmethod
     def from_xml(cls, path: str) -> None:
         return cls(StateTable.xml_converter.deserialize(path))
 
+    # Returns the values in a given column name or column index
     def get_column(self, col: int | str) -> list:
         if isinstance(col, int):
             return self.df.iloc[:, col].to_list()
@@ -38,19 +41,23 @@ class StateTable():
     def get_value(self, row: int, col: int) -> str | int | float:
         return self.df.iloc[row, col]
 
+    # Writes a csv file to the given path
     def to_csv(self, path: str='state_table') -> None:
         StateTable.csv_converter.serialize(path, self.df)
 
     def to_dataframe(self):
         return self.df
     
+    # Writes a xml file to the given path
     def to_xml(self, path: str='state_table', refresh: bool = False) -> None:
         if self.xml_tree and not refresh:
             self.xml_tree.write(path)
         self.xml_tree = StateTable.xml_converter.serialize(path, self.df)
 
+# Runs validation tests on a given state table
 class StateTableChecker():
 
+    # Runs the tests and returns a list of errors found
     def check_for_errors(self, state_table: StateTable) -> list:
         errors = []
         df = state_table.to_dataframe()
@@ -68,6 +75,7 @@ class StateTableChecker():
 
         return errors
 
+    # A helper function to help identify missing parents in state paths
     def generate_subpaths(self, path: str) -> set:
         path_parts = path.split('/')
         
@@ -79,9 +87,11 @@ class StateTableChecker():
         
         return subpaths
 
+    # A helper function to write error messages to the errors column in the state table dataframe
     def update_error_column(self, df:pd.DataFrame, msg: str, indexes: list) -> None:
         df.loc[indexes, 'Error'] = df.loc[indexes, 'Error'].apply(lambda x, msg: f'{x} | {msg}' if len(x) > 0 else msg, args=(msg,))
 
+    # Checks all state codes for each state class in the state table and returns a dictionary of found errors
     def check_duplicate_state_codes(self, df: pd.DataFrame) -> dict:
         classes = df.loc[df['StateClass'].isna() == False, 'StateClass'].unique()
         duplicates = []
@@ -95,6 +105,7 @@ class StateTableChecker():
 
         return {}
 
+    # Checks all the state paths in the state table for duplicates and returns a dictionary of found errors
     def check_duplicate_paths(self, df: pd.DataFrame) -> dict:
         duplicates = []
 
@@ -106,6 +117,7 @@ class StateTableChecker():
 
         return {}
 
+    # Checks all state paths for missing parents in the path and returns a dictionary with the missing parent paths
     def check_missing_parent(self, df: pd.DataFrame) -> dict:
         parents = set(list(df.loc[0, 'Parent']))
         error_msg = 'Missing parents'

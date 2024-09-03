@@ -29,6 +29,7 @@ class DataFrameTableModel(QAbstractTableModel):
         super(DataFrameTableModel, self).__init__()
         self._data = df
     
+    # Returns values and formatting for given index
     def data(self, index, role):
         if role in [Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole]:
             value = self._data.iloc[index.row(), index.column()]
@@ -46,6 +47,8 @@ class DataFrameTableModel(QAbstractTableModel):
 
             if isinstance(value, (np.float64, np.int64)):
                 return  Qt.AlignmentFlag.AlignVCenter + Qt.AlignmentFlag.AlignRight
+    
+    # Updates the value at a given index
     def setData(self, index, value, role):
         if role == Qt.ItemDataRole.EditRole:
             self._data.iloc[index.row(), index.column()] = value
@@ -53,9 +56,11 @@ class DataFrameTableModel(QAbstractTableModel):
         
         return False
 
+    # Sets flats to enable selection and editing for values
     def flags(self, index):
         return Qt.ItemFlag.ItemIsSelectable|Qt.ItemFlag.ItemIsEnabled|Qt.ItemFlag.ItemIsEditable
-        
+    
+    # Returns header column names and row indexes for headers
     def headerData(self, section, orientation, role):
         if role == Qt.ItemDataRole.DisplayRole:
             if orientation == Qt.Orientation.Horizontal:

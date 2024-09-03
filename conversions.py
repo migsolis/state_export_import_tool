@@ -14,6 +14,7 @@ class Converter(ABC):
     def serialize(self, path: str, df: pd.DataFrame=None) -> None:
         pass
 
+# Creates state table from csv files and exports state tables to csv
 class CSVConverter(Converter):
     def deserialize(self, path: str) -> pd.DataFrame:
         try:
@@ -34,6 +35,7 @@ class CSVConverter(Converter):
         df['Error'] = ''
         return df
 
+# Creates state table from excel file and exports state table to excel
 class ExcelConverter(Converter):
     def deserialize(self, path: str) -> pd.DataFrame:
         pass
@@ -41,9 +43,11 @@ class ExcelConverter(Converter):
     def serialize(self, path: str, df: pd.DataFrame=None) -> None:
         df.to_excel(path)
 
+# Creates state table from xml export and exports state table to xml
 class XMLConverter(Converter):
     ROOT_CHAR = '~'
 
+    # Reads a xml file and creates a dataframe from the file
     def deserialize(self, path: str=None) -> pd.DataFrame:
         try:
             self.xml_tree = ET.parse(path)
@@ -76,6 +80,7 @@ class XMLConverter(Converter):
 
         return df.reset_index(drop=True)
     
+    # Creates the etree and writes the XML file
     def serialize(self, path: str, df: pd.DataFrame=None) -> ET.ElementTree:
         # xml_header = '<?xml version="1.0" encoding="UTF-8" standalone="no"?><EquipmentStateRoot></EquipmentStateRoot>'
         if type(df) != pd.DataFrame:
@@ -92,6 +97,7 @@ class XMLConverter(Converter):
         doc.write(path)
         return doc
 
+    # Helper function that creates a state node with all the state properties
     def _create_state(self, parent: ET.Element, values: pd.DataFrame) -> ET.Element:
         elements = ['Name', 'Code', 'Type', 'ShortStopThreshold', 'EnableMeantimeMetrics', 'OverrideCurrentLineDowntime', 'Override', 'Scope']
         state = ET.SubElement(parent, 'EquipmentState')
@@ -106,6 +112,7 @@ class XMLConverter(Converter):
 
         return state
 
+    # Helper function that creates a state class node with all of the state class properties
     def _create_state_class(self, parent: ET.Element, values: pd.DataFrame) -> ET.Element:
         state_class = ET.SubElement(parent, 'EquipmentStateClass')
         tag = 'Name'
@@ -125,6 +132,7 @@ class XMLConverter(Converter):
         
         return state_class
 
+    # Recursively reconstructs the etree from a state table dataframe
     def _create_tree(self, index: int, df: pd.DataFrame, path: str, parent: ET.Element) -> int:
         while index < df.shape[0]:
             if df.loc[index, 'Parent'] != path:
@@ -140,6 +148,7 @@ class XMLConverter(Converter):
 
         return index    
     
+    # Performs a recursive preorder depth first traversal of the export file, adding each nodes to a state table dataframe
     def _destructure(self, node: ET.ElementTree, df: pd.DataFrame, parent: str=ROOT_CHAR, state_class: str='') -> pd.DataFrame:
         deep_children = []
         row_data = {}
@@ -165,5 +174,6 @@ class XMLConverter(Converter):
 
         return df
 
+    # Updates the current number of nodes processed 
     def _processed_count(self, value: int) -> None:
         self.current_count = value

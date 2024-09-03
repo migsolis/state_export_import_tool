@@ -10,14 +10,17 @@ class StateExportImportTool(QWidget):
     def __init__(self, data=[]):
         super().__init__()
 
+        # Creates the window and set the windows grid layout
         self.setWindowTitle('State Export/Import Tool')
         self.layout = QGridLayout(self)
-
+        
+        # Create and connect signals open export files and download template buttons
         self.button = QPushButton('Open Export Files')
         self.button.clicked.connect(self.open_Files)
         self.template_button = QPushButton('Download CSV Template')
         self.template_button.clicked.connect(self.download_template_button_clicked)
 
+        # Create and connect signals for the conversion and state table preview buttons
         self.preview_button = QPushButton('Preview State Table')
         self.preview_button.setDisabled(True)
         self.preview_button.clicked.connect(self.preview)
@@ -30,10 +33,12 @@ class StateExportImportTool(QWidget):
         self.progress_label = QLabel('Select files to convert!')
         # self.progress_label.hide()
 
+        # Creates the table that holds the open files details
         self.table = self.create_table()
         # self.progress_bar = self.create_progress_bar()
         # self.progress_bar.hide()
 
+        # Adds the UI widgets to the main widget container and sets the widget positions in the grid layout
         self.layout.addWidget(self.button, 0, 0, 1, 3)
         self.layout.addWidget(self.template_button, 0, 8, 1, 4)
         self.layout.addWidget(self.table, 1, 0, 1, 12)
@@ -43,9 +48,12 @@ class StateExportImportTool(QWidget):
         self.layout.addWidget(self.progress_label, 3, 0, 1, 12)
         # self.layout.addWidget(self.progress_bar, 4, 0, 1, 12)
 
+        # Creates an instance of the state table validation class
         self.state_tables = []
         self.state_table_checker = StateTableChecker()
     
+    # Enables/disables conversion buttons based on file table row selection checkboxes
+    # Conversion buttons are enabled if all the selected rows are the same file type
     @Slot()
     def cell_changed(self, row, col):
         if col == 0:
@@ -67,6 +75,8 @@ class StateExportImportTool(QWidget):
     def cell_clicked(self, row, col):
         print(f'Cell clicked row {row} col {col}')
 
+    # Enabled and updates the text of the state table preview button using the selected items file name
+    # TODO: Handle updating button after deselecting a row
     @Slot()
     def item_selection_changed(self):
         selected_items = self.table.selectedItems()
@@ -77,6 +87,7 @@ class StateExportImportTool(QWidget):
         self.preview_button.setText(f'Preview {file_name}')
         self.preview_button.setDisabled(False)
 
+    # Handles opening the selected files and creating state table instances from the files
     @Slot()
     def open_Files(self):
         files = QFileDialog.getOpenFileNames(self, 
@@ -93,7 +104,9 @@ class StateExportImportTool(QWidget):
             output_name = split_name[0]
             # output_name = f'{filename.split('.')[0]}_{strftime('%Y%m%d_%H%M%S')}'
             extension = split_name[-1]
-
+            
+            # Create state table from file using the file path
+            # TODO: handle read errors or invalid files
             state_table = None
             if extension == 'csv':
                 state_table = StateTable().from_csv(path)
@@ -108,6 +121,7 @@ class StateExportImportTool(QWidget):
             row_num = self.insert_table_row(filename=filename, path=path, extension=extension, output_name=output_name, message=message)
             self.state_tables.insert(row_num, state_table)
 
+    # Opens the state table widget windows for the selected row in the open files table
     @Slot()
     def preview(self):
         print(f'Preview button clicked')
@@ -117,13 +131,15 @@ class StateExportImportTool(QWidget):
         self.state_table_widget = StateTableWidget(self.state_tables[row])
         self.state_table_widget.resize(900, 600)
         self.state_table_widget.show()
-
+    
+    # TODO: Display deserialization/serialization progress 
     @Slot()
     def advance_progressbar(self):
         cur_val = self.progress_bar.value()
         max_val = self.progress_bar.maximum()
         self.progress_bar.setValue(cur_val + (max_val - cur_val) / 100)
 
+    # Opens a save file dialog to download a csv state table template
     @Slot()
     def download_template_button_clicked(self):
         filename, _ = QFileDialog.getSaveFileName(self,
@@ -134,6 +150,7 @@ class StateExportImportTool(QWidget):
         with open(filename, 'w') as file:
             file.write(template)
 
+    # Opens a save file dialog and generate a csv export of the selected open files
     @Slot()
     def to_csv_button_clicked(self):
         print('XML to CSV button pressed')
@@ -151,7 +168,7 @@ class StateExportImportTool(QWidget):
             print(filename)
             state_table.to_csv(filename)
                 
-
+    # Opens a save file dialog and generate a xml export of the selected open files
     @Slot()
     def to_xml_button_clicked(self):
         print('CSV to XML button pressed')
@@ -169,17 +186,17 @@ class StateExportImportTool(QWidget):
             print(filename)
             state_table.to_xml(filename)
 
-    def save_file(self, file_info):
-        pass
-
+    # Iterate through the open files table and return the selected rows data
     def get_selected_files(self):
         data = []
         for row in range(self.table.rowCount()):
+            # gets the checkbox item from the table
             selected = self.table.item(row, 0)
             
             if selected.checkState() != Qt.CheckState.Checked:
                 continue
             
+
             row_data = {'row': row}
             for col in range(1, self.table.columnCount()):
                 header_text = self.table.horizontalHeaderItem(col).text()
@@ -190,8 +207,11 @@ class StateExportImportTool(QWidget):
         
         return data
 
+    # Creates the open files table
     def create_table(self):
         table = QTableWidget(self)
+
+        # Configures the column headers, column automatic resizing, and visibility attributes
         table.setColumnCount(6)
         table.setHorizontalHeaderLabels([None, 'File Name', 'Path', 'Extension', 'Output Name', 'Message'])
         table.horizontalHeader().setMinimumSectionSize(20)
@@ -204,6 +224,7 @@ class StateExportImportTool(QWidget):
         table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
         # table.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
         table.horizontalHeader().setStretchLastSection(True)
+
         table.verticalHeader().setVisible(False)
         table.setRowCount(0)
         table.cellChanged.connect(self.cell_changed)
@@ -214,6 +235,7 @@ class StateExportImportTool(QWidget):
 
         return table
     
+    # Inserts a row into the open files table
     def insert_table_row(self, selected=False, filename=None, path=None, extension=None, output_name='', message='') -> int:
         if filename:
             row_num = self.table.rowCount()
@@ -222,6 +244,7 @@ class StateExportImportTool(QWidget):
             self.update_table_row(row_num, selected=selected, filename=filename, path=path, extension=extension, output_name=output_name, message=message)
             return row_num
 
+    # Updates the data for a given row in the open files table
     def update_table_row(self, row, *, selected=False, filename=None, path=None, extension=None, output_name=None, message=None):
         checkbox_item = QTableWidgetItem()
         checkbox_item.setCheckState(Qt.CheckState.Checked if selected else Qt.CheckState.Unchecked)
@@ -251,6 +274,7 @@ class StateExportImportTool(QWidget):
             message_item.setFlags(message_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             self.table.setItem(row, 5, message_item)
 
+    # Creates a progress bar with test values
     def create_progress_bar(self):
         progress_bar = QProgressBar()
         progress_bar.setRange(0, 10000)
@@ -265,12 +289,8 @@ if __name__ == '__main__':
     app.setStyle('fusion')
 
     widget = StateExportImportTool()
-    # widget.setStyleSheet
     widget.resize(600, 400)
     widget.setFixedSize(600, 300)
     widget.show()
 
-    # with open('resources/stylesheets/styles.css') as styles:
-    #     file_string = styles.read()
-    #     widget.setStyleSheet(file_string)
     sys.exit(app.exec())
